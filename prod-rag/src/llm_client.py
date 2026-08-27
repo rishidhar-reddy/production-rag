@@ -18,11 +18,22 @@ class LLMClient:
         self.temperature = float(os.getenv("LLM_TEMPERATURE", "0"))
         self.prompt_name = os.getenv("RAG_PROMPT", "rag")
 
-        self.llm = ChatGroq(
-            model=self.model_name,
-            temperature=self.temperature,
-            api_key=os.getenv("GROQ_API_KEY"),
-        )
+        self._llm: ChatGroq | None = None
+
+    @property
+    def llm(self) -> ChatGroq:
+        """Build the Groq client on first use.
+
+        Constructing at import meant a missing GROQ_API_KEY broke every import
+        of src/, including code paths that never call the LLM.
+        """
+        if self._llm is None:
+            self._llm = ChatGroq(
+                model=self.model_name,
+                temperature=self.temperature,
+                api_key=os.getenv("GROQ_API_KEY"),
+            )
+        return self._llm
 
     def generate_answer(
         self,

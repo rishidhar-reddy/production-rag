@@ -16,7 +16,14 @@ class Reranker:
             "ms-marco-MiniLM-L-12-v2",
         )
 
-        self.ranker = Ranker(model_name=self.model_name)
+        self._ranker: Ranker | None = None
+
+    @property
+    def ranker(self) -> Ranker:
+        """Load the cross-encoder on first use, not at import."""
+        if self._ranker is None:
+            self._ranker = Ranker(model_name=self.model_name)
+        return self._ranker
 
     def rerank(
         self,

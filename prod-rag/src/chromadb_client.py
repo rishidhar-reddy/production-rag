@@ -15,15 +15,28 @@ class ChromaDBClient:
         self.hnsw_construction_ef = int(os.getenv("CHROMA_HNSW_CONSTRUCTION_EF", "200"))
         self.hnsw_search_ef = int(os.getenv("CHROMA_HNSW_SEARCH_EF", "100"))
 
-        self.client = chromadb.PersistentClient(path=self.chroma_dir)
-        self.collection = self.client.get_or_create_collection(
-            name=self.collection_name,
-            metadata={
-                "hnsw:space": "cosine",
-                "hnsw:construction_ef": self.hnsw_construction_ef,
-                "hnsw:search_ef": self.hnsw_search_ef,
-            },
-        )
+        self._client = None
+        self._collection = None
+
+    @property
+    def client(self):
+        """Open the persistent store on first use, not at import."""
+        if self._client is None:
+            self._client = chromadb.PersistentClient(path=self.chroma_dir)
+        return self._client
+
+    @property
+    def collection(self):
+        if self._collection is None:
+            self._collection = self.client.get_or_create_collection(
+                name=self.collection_name,
+                metadata={
+                    "hnsw:space": "cosine",
+                    "hnsw:construction_ef": self.hnsw_construction_ef,
+                    "hnsw:search_ef": self.hnsw_search_ef,
+                },
+            )
+        return self._collection
 
     def retrieve(
         self,

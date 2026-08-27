@@ -11,11 +11,24 @@ class ElasticsearchClient:
     def __init__(self):
         self.es_url = os.getenv("ELASTICSEARCH_URL", "http://localhost:9200")
         self.index_name = os.getenv("ELASTICSEARCH_INDEX", "wiki_chunks")
+        self._client: Elasticsearch | None = None
 
-        self.client = Elasticsearch(self.es_url)
+    @property
+    def client(self) -> Elasticsearch:
+        """Connect on first use.
 
-        if not self.client.ping():
-            raise RuntimeError("Could not connect to Elasticsearch")
+        This used to connect in __init__, and the module instantiates a
+        singleton at import time, so importing anything under src/ required a
+        live Elasticsearch -- including the pure retrieval-fusion logic, which
+        touches no I/O at all. Connecting lazily keeps the failure at the point
+        of the query, where it is actionable.
+        """
+        if self._client is None:
+            client = Elasticsearch(self.es_url)
+            if not client.ping():
+                raise RuntimeError(f"Could not connect to Elasticsearch at {self.es_url}")
+            self._client = client
+        return self._client
 
     def retrieve(self, query: str, top_k: int = 25) -> list[dict[str, Any]]:
         response = self.client.search(
