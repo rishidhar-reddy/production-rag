@@ -14,7 +14,18 @@ class QueryProcessor:
             "sentence-transformers/all-MiniLM-L6-v2",
         )
 
-        self.embedding_model = SentenceTransformer(self.embedding_model_name)
+        self._embedding_model: SentenceTransformer | None = None
+
+    @property
+    def embedding_model(self) -> SentenceTransformer:
+        """Load the sentence-transformer on first use.
+
+        Loading at import cost every consumer a model download and several
+        seconds, even ones that never embed anything.
+        """
+        if self._embedding_model is None:
+            self._embedding_model = SentenceTransformer(self.embedding_model_name)
+        return self._embedding_model
 
     def normalize_query(self, query: str) -> str:
         return query.strip()
@@ -31,21 +42,26 @@ class QueryProcessor:
         """
         return query
 
+    def _encode(self, text: str) -> list[float]:
+        """Embed text that has already been normalized and rewritten."""
+        embedding = self.embedding_model.encode(text, normalize_embeddings=True)
+        return embedding.tolist()
+
     def embed_query(self, query: str) -> list[float]:
+        """Normalize, rewrite, and embed a raw query."""
         normalized_query = self.normalize_query(query)
         rewritten_query = self.rewrite_query(normalized_query)
-
-        embedding = self.embedding_model.encode(
-            rewritten_query,
-            normalize_embeddings=True,
-        )
-
-        return embedding.tolist()
+        return self._encode(rewritten_query)
 
     def process(self, query: str) -> dict:
         normalized_query = self.normalize_query(query)
         rewritten_query = self.rewrite_query(normalized_query)
-        embedding = self.embed_query(rewritten_query)
+        # Embed the already-rewritten text directly. Calling embed_query here
+        # would normalize and rewrite a second time; rewrite_query is currently
+        # the identity function, but it is documented as the hook for LLM-based
+        # rewriting and HyDE, and applying either twice would both corrupt the
+        # query and pay for two LLM calls.
+        embedding = self._encode(rewritten_query)
 
         return {
             "original_query": query,
