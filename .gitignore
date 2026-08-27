@@ -74,3 +74,6 @@ evals/results/
 # Raw wiki dataset (download separately, see wiki_dataset/README.md)
 wiki_dataset/*
 !wiki_dataset/README.md
+__pycache__/
+*.pyc
+.pytest_cache/
