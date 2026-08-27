@@ -36,9 +36,11 @@ say so; the fusion bug found and fixed below stands on its own.]
 
 ## My contributions in this repository
 
-`git log --author="Rishidhar Reddy Garlapati"`
+Verifiable with `git log --author="Rishidhar Reddy Garlapati"`. Commits are cited by subject rather than hash, since hashes change if history is ever rewritten.
 
-### Made the hybrid retriever actually hybrid (`d0b9c9a`)
+### Made the hybrid retriever actually hybrid
+
+> commit `fix: rank hybrid results with Reciprocal Rank Fusion`
 
 **The bug.** Fusion sorted on the tuple `(source_count, semantic_score, keyword_score)`.
 Cosine similarity is bounded to ~[0, 1]; BM25 is unbounded and routinely exceeds 20. The
@@ -56,7 +58,9 @@ entirely; documents both retrievers agree on accumulate from both lists. The sam
 now places the BM25 hit **second**. 10 tests cover preservation, dedup, agreement,
 rank-order fidelity, and invariance to keyword-score scaling.
 
-### Made the package testable at all (`cd09357`)
+### Made the package testable at all
+
+> commit `refactor: initialize clients lazily so the package imports without infra`
 
 Every client was a module-level singleton built at import, and
 `ElasticsearchClient.__init__` pinged the server and raised. So importing
@@ -67,7 +71,9 @@ That is *why* the repo had zero tests. Each client now initializes lazily behind
 property; public names are unchanged. This had to land before the fusion bug above could
 be written as a test.
 
-### Fixed a latent double-rewrite (`aec6601`)
+### Fixed a latent double-rewrite
+
+> commit `fix: stop normalizing and rewriting the query twice in process()`
 
 `process()` normalized and rewrote the query, then passed it to `embed_query()`, which
 normalized and rewrote it *again*. Harmless today because `rewrite_query` is the
