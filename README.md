@@ -1,3 +1,7 @@
+> **Portfolio note:** this repository preserves the original author's full commit history.
+> For what I contributed, see [PORTFOLIO.md](PORTFOLIO.md).
+> Architecture walkthrough: [docs/SYSTEM-DEEPDIVE.md](docs/SYSTEM-DEEPDIVE.md)
+
 # Production RAG
 
 An end-to-end pipeline for building and serving a production-style
